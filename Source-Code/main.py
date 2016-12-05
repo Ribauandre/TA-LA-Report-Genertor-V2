@@ -11,7 +11,7 @@ import sys, os, csv, difflib,random
 import design
 import csv
 import codecs
-
+# add comment in
 class Main_App(QtGui.QMainWindow, design.Ui_MainWindow):
     def __init__(self,parent=None):
         super(self.__class__, self).__init__()
