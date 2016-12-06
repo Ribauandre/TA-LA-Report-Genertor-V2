@@ -11,9 +11,10 @@ import sys, os, csv, difflib,random
 import design
 import csv
 import codecs
-# add comment in
+
 class Main_App(QtGui.QMainWindow, design.Ui_MainWindow):
     def __init__(self,parent=None):
+        #Defining all variables
         super(self.__class__, self).__init__()
         self.setupUi(self)
         self.createDirectories()
@@ -25,7 +26,7 @@ class Main_App(QtGui.QMainWindow, design.Ui_MainWindow):
         self.allReportsButton.clicked.connect(self.allReports)
         self.singleReportButton.clicked.connect(self.singleReport)
         self.masterReportButton.clicked.connect(self.masterReport)
-
+           # calls all reports generator
     def allReports(self):
         filepath = QtGui.QFileDialog.getOpenFileName(self)
         if len(filepath) > 0:
@@ -46,17 +47,17 @@ class Main_App(QtGui.QMainWindow, design.Ui_MainWindow):
 
     def Done(self):
         QtGui.QMessageBox.information(self, "Done!", "All TA/LA reports generated in Reports Folder!")
-
+    # loads csv file
     def loadFile(self):
         self.filepath = QtGui.QFileDialog.getOpenFileName(self)
         if len(self.filepath) > 0:
             self.myThread = fillNames(self.filepath)
             self.connect(self.myThread,SIGNAL('addLaName(QString)'), self.addName)
             self.myThread.start()
-
+    # adds ta/la name
     def addName(self,name):
         self.listWidget.addItem(name)
-
+    # Calls singleReport generator 
     def singleReport(self):
         currentPos = self.listWidget.currentRow()
         item = self.listWidget.item(currentPos)
@@ -67,18 +68,18 @@ class Main_App(QtGui.QMainWindow, design.Ui_MainWindow):
             self.myThread.start()
         else:
             QtGui.QMessageBox.information(self, "Error", "TA/LA CSV Not Loaded Yet! Please load to proceed")
-
+    # creates a report folder
     def createDirectories(self):
         if not os.path.exists('Reports'):
             os.makedirs("Reports")
-
+    # Calls masterReport generator 
     def masterReport(self):
         filepath = QtGui.QFileDialog.getOpenFileName(self)
         if len(filepath) > 0:
             self.myThread = Generate_Master_Report(filepath, self.template)
             self.connect(self.myThread, SIGNAL("finished()"), self.Done)
             self.myThread.start()
-
+# reads unicode file 
 class UnicodeDictReader( object ):
     def __init__( self, *args, **kw ):
         self.encoding= kw.pop('encoding', 'mac_roman')
@@ -88,7 +89,7 @@ class UnicodeDictReader( object ):
         for row in self.reader:
             t= dict( (k,decode(row[k])[0]) for k in row )
             yield t
-
+# class used to generate an indivdual report for an individal ta/la
 class generateIndividualReport(QThread):
     def __init__(self, filepath, La_Name, Template):
         QThread.__init__(self)
@@ -97,7 +98,7 @@ class generateIndividualReport(QThread):
         self.template = Template
     def __del__(self):
         self.wait()
-
+    # intakes responses and check words to create a numbered rating system to base averages off of
     def conversion_table_construct(self):
         marker = 0
         conversion_table = {}
@@ -117,7 +118,7 @@ class generateIndividualReport(QThread):
         print ("looking for these words")
         print (conversion_table)
         return conversion_table
-
+    #checks for words int he ignore txt file to ignore in data
     def avoid_table_construct(self):
         marker = 0
         avoid_list = []
@@ -133,7 +134,7 @@ class generateIndividualReport(QThread):
         print ("avoiding these words")
         print (avoid_list)
         return avoid_list
-
+    #converts the text into a number
     def convert_to_number(self, convert_text, conversion_table):
         number = 0
         number_array = []
@@ -145,13 +146,13 @@ class generateIndividualReport(QThread):
                 elif number == 0 or number == 'Null':
                     number = 'Null'
         return number_array
-
+    # takes in the response and trims it dwon to a smaller output
     def trim_response(self, text_to_trim):
         return_text = []
         for i in range(10, len(text_to_trim)):
             return_text.append(text_to_trim[i])
         return return_text
-
+    # takes in the survey question and trims it down to a smaller output
     def trim_question(self, question_to_trim):
         question_text = []
         for i in range(10, len(question_to_trim) - 4):
@@ -173,14 +174,14 @@ class generateIndividualReport(QThread):
             else:
                 question_text.append(question_to_trim[i])
         return question_text
-
+    # appends responses to an array
     def response_find(self, name, question_to_search, responses):
         ans = []
         for entry in responses:
             if name in entry:
                 ans.append(entry[question_to_search])
         return ans
-
+    # creates blank idivdual report
     def create_individual_report(self, response_list, name):
         report_data = []
         for entry in response_list:
@@ -204,7 +205,7 @@ class generateIndividualReport(QThread):
             if add_rating not in rating_list:
                 rating_list.append(add_rating)
         return rating_list
-
+    # populates the report
     def fill_table(self, question_number, document, table_number, report_container):
         rating_list = []
         for entry in report_container:
@@ -230,7 +231,7 @@ class generateIndividualReport(QThread):
             toi.cell(-1, 1).text = str(total)
             toi.cell(-1, 2).text = str(average * 100) + '%'
             total = 0
-
+    #outputs the final report document
     def print_individual_report(self, report_holder, questions_list):
         document = Document('Individual Template.docx')
         document.paragraphs[0].add_run(report_holder[0][1])
@@ -332,7 +333,7 @@ class Generate_Master_Report(QThread):
         self.template = Template
     def __del__(self):
         self.wait()
-
+    # intakes responses and check words to create a numbered rating system to base averages off of
     def conversion_table_construct(self):
         marker = 0
         conversion_table = {}
@@ -352,7 +353,7 @@ class Generate_Master_Report(QThread):
         print ("looking for these words")
         print (conversion_table)
         return conversion_table
-
+    #checks for words int he ignore txt file to ignore in data
     def avoid_table_construct(self):
         marker = 0
         avoid_list = []
@@ -368,7 +369,7 @@ class Generate_Master_Report(QThread):
         print ("avoiding these words")
         print (avoid_list)
         return avoid_list
-
+     #converts the text into a number
     def convert_to_number(self,convert_text, conversion_table):
         number = 0
         number_array = []
@@ -380,13 +381,13 @@ class Generate_Master_Report(QThread):
                 elif number == 0 or number == 'Null':
                     number = 'Null'
         return number_array
-
+     # takes in the response and trims it dwon to a smaller output
     def trim_response(self,text_to_trim):
         return_text = []
         for i in range(10, len(text_to_trim)):
             return_text.append(text_to_trim[i])
         return return_text
-
+    # takes in the survey question and trims it down to a smaller output
     def trim_question(self,question_to_trim):
         question_text = []
         for i in range(10, len(question_to_trim) - 4):
@@ -408,14 +409,14 @@ class Generate_Master_Report(QThread):
             else:
                 question_text.append(question_to_trim[i])
         return question_text
-
+    # appends responses to an array
     def response_find(self, name, question_to_search, responses):
         ans = []
         for entry in responses:
             if name in entry:
                 ans.append(entry[question_to_search])
         return ans
-
+    # appends responses to an array
     def create_individual_report(self, response_list, name):
         report_data = []
         for entry in response_list:
@@ -439,7 +440,7 @@ class Generate_Master_Report(QThread):
             if add_rating not in rating_list:
                 rating_list.append(add_rating)
         return rating_list
-
+    # appends responses to an array
     def fill_table(self,question_number, document, table_number, report_container):
         rating_list = []
         for entry in report_container:
@@ -465,7 +466,7 @@ class Generate_Master_Report(QThread):
             toi.cell(-1, 1).text = str(total)
             toi.cell(-1, 2).text = str(average * 100) + '%'
             total = 0
-
+    #outputs the final report document
     def print_individual_report(self,report_holder, questions_list):
         document = Document('Individual Template.docx')
         document.paragraphs[0].add_run(report_holder[0][1])
@@ -576,7 +577,7 @@ class Generate_All_Reports(QThread):
         self.template = Template
     def __del__(self):
         self.wait()
-
+    # intakes responses and check words to create a numbered rating system to base averages off of
     def conversion_table_construct(self):
         marker = 0
         conversion_table = {}
@@ -596,7 +597,7 @@ class Generate_All_Reports(QThread):
         print ("looking for these words")
         print (conversion_table)
         return conversion_table
-
+    #checks for words int he ignore txt file to ignore in data
     def avoid_table_construct(self):
         marker = 0
         avoid_list = []
@@ -611,7 +612,7 @@ class Generate_All_Reports(QThread):
         textids.close()
         print ("avoiding these words")
         return avoid_list
-
+     #converts the text into a number
     def convert_to_number(self,convert_text, conversion_table):
         number = 0
         number_array = []
@@ -623,13 +624,13 @@ class Generate_All_Reports(QThread):
                 elif number == 0 or number == 'Null':
                     number = 'Null'
         return number_array
-
+     # takes in the response and trims it dwon to a smaller output
     def trim_response(self,text_to_trim):
         return_text = []
         for i in range(10, len(text_to_trim)):
             return_text.append(text_to_trim[i])
         return return_text
-
+    # takes in the survey question and trims it down to a smaller output
     def trim_question(self,question_to_trim):
         question_text = []
         for i in range(10, len(question_to_trim) - 4):
@@ -650,14 +651,14 @@ class Generate_All_Reports(QThread):
             else:
                 question_text.append(question_to_trim[i])
         return question_text
-
+    # appends responses to an array
     def response_find(self, name, question_to_search, responses):
         ans = []
         for entry in responses:
             if name in entry:
                 ans.append(entry[question_to_search])
         return ans
-
+    # appends responses to an array
     def create_individual_report(self, response_list, name):
         report_data = []
         for entry in response_list:
@@ -681,7 +682,7 @@ class Generate_All_Reports(QThread):
             if add_rating not in rating_list:
                 rating_list.append(add_rating)
         return rating_list
-
+    # appends responses to an array
     def fill_table(self,question_number, document, table_number, report_container):
         rating_list = []
         for entry in report_container:
@@ -707,7 +708,7 @@ class Generate_All_Reports(QThread):
             toi.cell(-1, 1).text = str(total)
             toi.cell(-1, 2).text = str(round((float(average) * 100), 2)) + '%'
             total = 0
-
+    #outputs the final report document
     def print_individual_report(self,report_holder, questions_list):
         document = Document('Individual Template.docx')
         document.paragraphs[0].add_run(report_holder[0][1])
@@ -802,7 +803,7 @@ class Generate_All_Reports(QThread):
                     self.print_individual_report(report, questions)
             self.print_master_report(report_list, number_table)
         readfile.close()
-
+# populates all tables and responses
 class fillNames(QThread):
     def __init__(self,filepath):
         QThread.__init__(self)
@@ -868,7 +869,7 @@ class fillNames(QThread):
             else:
                 question_text.append(question_to_trim[i])
         return question_text
-
+# class used to create a qualtrics CSV file
 class Create_Qualtrics_CSV(QThread):
     def __init__(self, filename):
         QThread.__init__(self)
