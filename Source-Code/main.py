@@ -79,16 +79,7 @@ class Main_App(QtGui.QMainWindow, design.Ui_MainWindow):
             self.myThread = Generate_Master_Report(filepath, self.template)
             self.connect(self.myThread, SIGNAL("finished()"), self.Done)
             self.myThread.start()
-# reads unicode file 
-class UnicodeDictReader( object ):
-    def __init__( self, *args, **kw ):
-        self.encoding= kw.pop('encoding', 'mac_roman')
-        self.reader= csv.DictReader( *args, **kw )
-    def __iter__( self ):
-        decode= codecs.getdecoder( self.encoding )
-        for row in self.reader:
-            t= dict( (k,decode(row[k])[0]) for k in row )
-            yield t
+            
 # class used to generate an indivdual report for an individal ta/la
 class generateIndividualReport(QThread):
     def __init__(self, filepath, La_Name, Template):
@@ -288,8 +279,9 @@ class generateIndividualReport(QThread):
         document.paragraphs[9].add_run(str(q4_average))
         document.paragraphs[11].add_run(str(q5_average))
         document.save('Master Report.docx')
-
+#runs Selected LA Report
     def run(self):
+        #converts the downloaded UNICODE file to ASCII.
         fin = codecs.open(self.filepath, encoding='utf-8')
         fout = codecs.open('Input.csv', 'w', encoding='ascii', errors='ignore')
 
@@ -523,8 +515,9 @@ class Generate_Master_Report(QThread):
         document.paragraphs[9].add_run(str(q4_average))
         document.paragraphs[11].add_run(str(q5_average))
         document.save('Master Report.docx')
-
+#runs master report 
     def run(self):
+        #decodes downloaded Unicode file and encodes it to ascii format
         with open(self.filepath, "r") as readfile:
             fin = codecs.open(self.filepath, encoding='utf-8')
             fout = codecs.open('Input.csv', 'w', encoding='ascii', errors='ignore')
@@ -731,7 +724,7 @@ class Generate_All_Reports(QThread):
         else:
             document.save('reports/' + name)
 
-#Calulates Average from source file (Doesn't seem to do anything)
+    #Calulates Average from source file (Doesn't seem to do anything)
     def calc_average_for_array(self,array):
         holder = 0
         for number in array:
@@ -767,15 +760,16 @@ class Generate_All_Reports(QThread):
         document.paragraphs[11].add_run(str(q5_average))
         document.save('Master Report.docx')
 
-# Opens Blank Master Report File (For All Reports)
+    # runs generate all reports
     def run(self):
+    # converts csv to pipe delimited file 
         with open(self.filepath, 'rb') as fin, \
                 open('Output.csv', 'wb') as fout:
             reader = csv.DictReader(fin)
             writer = csv.DictWriter(fout, reader.fieldnames, delimiter='|')
             writer.writeheader()
             writer.writerows(reader)
-
+    # reads pipe delimited file to be used in the final report
         with open('Output.csv', 'r') as readfile:
             questions = []
             response_holder = []
